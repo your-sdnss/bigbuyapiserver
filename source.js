@@ -3,7 +3,7 @@ require('dotenv').config();
 const token = process.env.API_TOKEN;
 const fs = require("fs");
 const cronJob = require('cron').CronJob;
-
+const path = require("path");
 
 const job = new cronJob('0 */1 * * * *', getOnce);
 
@@ -403,7 +403,7 @@ const cors = require('cors');
 const events = require('events');
 const bp = require('body-parser')
 
-const PORT = 5000;
+const PORT = process.env.API_PORT;
 
 const app = express();
 
@@ -893,5 +893,7 @@ function postData(name) {
 //         }
 //     }
 // }
+
+app.use(express.static(path.resolve(__dirname, '../client/build')));
 
 app.listen(PORT, () => console.log('server is started'));
