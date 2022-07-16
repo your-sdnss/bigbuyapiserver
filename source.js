@@ -26,7 +26,7 @@ function getOnce(){
         let yearNow = dateNow.split("/")[2].split(",")[0];
         let monthNow = dateNow.split("/")[1];
         let dayNow = dateNow.split("/")[0];
-        let hourNow = dateNow.split("/")[2].split(",")[2].replace( /\s/gm , "").split(":")[0];
+        let hourNow = dateNow.split("/")[2].split(",")[1].replace( /\s/gm , "").split(":")[0];
 
         let checkingArr = [];
 
