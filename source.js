@@ -41,7 +41,6 @@ function getOnce(){
             checkingArr.push(obj);
         }
 
-        console.log(checkingArr);
 
         fs.writeFile(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-variables.json`, JSON.stringify(checkingArr), function(err) {
                 if (err) throw err;
@@ -130,10 +129,7 @@ function getData() {
         let rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourNow - 1}.json`);
         let baseArr = JSON.parse(rawBase);
 
-        console.log("base array " + baseArr);
 
-        console.log("checking array" + checkingArr);
-        console.log("started filtering");
         var biggestKey;
 
         if (baseArr.length > checkingArr.length) {
@@ -183,13 +179,10 @@ function getData() {
             }
             if (baseArr[j] !== undefined && checkingArr[j] !== undefined) {
                 if (baseArr[j].quantity > checkingArr[j].quantity) {
-                    console.log("they bought - " + checkingArr[j]);
                     reqObject.sku = checkingArr[j].sku;
                     reqObject.quantity = checkingArr[j].quantity;
                     reqObject.diff = baseArr[j].quantity - checkingArr[j].quantity;
                     reqArray.push(reqObject);
-                } else if (baseArr[j].quantity === checkingArr[j].quantity) {
-                    console.log("stable");
                 }
             }
         }
@@ -257,10 +250,6 @@ function getVariables() {
         let baseArr = JSON.parse(rawBase);
 
 
-        console.log("base array " + baseArr);
-
-        console.log("checking array" + checkingArr);
-        console.log("started filtering");
         var biggestKey;
 
         if (baseArr.length > checkingArr.length) {
@@ -309,14 +298,11 @@ function getVariables() {
                 quantity: 0
             }
             if (baseArr[j] !== undefined && checkingArr[j] !== undefined) {
-                if (baseArr[j].quantity > checkingArr[j].quantity) {
-                    console.log("they bought - " + checkingArr[j]);
+                if (baseArr[j].quantity > checkingArr[j].quantity && (baseArr[j].quantity - checkingArr[j].quantity) > 200) {
                     reqObject.sku = checkingArr[j].sku;
                     reqObject.quantity = checkingArr[j].quantity;
                     reqObject.diff = baseArr[j].quantity - checkingArr[j].quantity;
                     reqArray.push(reqObject);
-                } else if (baseArr[j].quantity === checkingArr[j].quantity) {
-                    console.log("stable");
                 }
             }
         }
@@ -329,7 +315,6 @@ function getVariables() {
             if (err) throw err;
             fs.writeFile(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`, JSON.stringify(json), function (err) {
                 if (err) throw err;
-                console.log('Append');
             });
         })
 
@@ -419,14 +404,11 @@ function postData(name) {
     for (let i = 0; i < datesTempArr.length; i++) {
 
         if(datesTempArr[i+1] === undefined){
-            console.log(readyToGoArray);
             return readyToGoArray;
         }
 
-        console.log(`${datesTempArr[i]}`)
         let baseArrRaw = fs.readFileSync(`${datesTempArr[i]}`);
         let baseArr = JSON.parse(baseArrRaw);
-        console.log(`${datesTempArr[i+1]}`)
         let checkingArrRaw = fs.readFileSync(`${datesTempArr[i+1]}`);
         let checkingArr = JSON.parse(checkingArrRaw);
 

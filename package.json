@@ -5,7 +5,7 @@
   "main": "source.js",
   "scripts": {
     "start": "node source.js",
-    "build": "cd ../client && npm run-script start",
+    "build": "cd ../bigbuyapireactclient && npm run-script start",
     "launch": "concurrently \"npm run start\" \"npm run build\""
   },
   "author": "",
