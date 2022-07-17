@@ -5,10 +5,9 @@ const fs = require("fs");
 const cronJob = require('cron').CronJob;
 const path = require("path");
 
-const job = new cronJob('0 */1 * * * *', getOnce);
-
-job.start();
-
+// const job = new cronJob('0 */1 * * * *', getOnce);
+//
+// job.start();
 
 const instance = axios.create({
     baseURL: 'https://api.bigbuy.eu/rest',
@@ -126,7 +125,13 @@ function getData() {
             }
         );
 
-        let rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourNow - 1}.json`);
+        let rawBase;
+
+        if(hourNow.toString() === "00") {
+            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T23.json`);
+        } else {
+            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourNow - 1}.json`);
+        }
         let baseArr = JSON.parse(rawBase);
 
 
@@ -246,7 +251,13 @@ function getVariables() {
             }
         );
 
-        let rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourNow - 1}-variables.json`);
+        let rawBase;
+
+        if(hourNow.toString() === "00") {
+            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T23-variables.json`);
+        } else {
+            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourNow - 1}-variables.json`);
+        }
         let baseArr = JSON.parse(rawBase);
 
 
