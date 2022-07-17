@@ -5,9 +5,9 @@ const fs = require("fs");
 const cronJob = require('cron').CronJob;
 const path = require("path");
 
-// const job = new cronJob('0 */1 * * * *', getOnce);
-//
-// job.start();
+const job = new cronJob('0 0 */1 * * *', getOnce);
+
+job.start();
 
 const instance = axios.create({
     baseURL: 'https://api.bigbuy.eu/rest',
@@ -383,10 +383,10 @@ function postData(name) {
     let datesTempArr = [];
 
     let checkingArrPathRaw = name.split("and").pop();
-    let checkingArrPath = checkingArrPathRaw.replace(/:\d\d/gm, '').replace(/T./gm, "T");
+    let checkingArrPath = checkingArrPathRaw.replace(/:\d\d/gm, '');
 
     let baseArrPathRaw = name.split("and").shift();
-    let baseArrPath = baseArrPathRaw.replace(/:\d\d/gm, '').replace(/T./gm, "T");
+    let baseArrPath = baseArrPathRaw.replace(/:\d\d/gm, '');
 
     console.log(baseArrPath);
     console.log(checkingArrPath);
