@@ -5,7 +5,7 @@ const fs = require("fs");
 const cronJob = require('cron').CronJob;
 const path = require("path");
 
-const job = new cronJob('0 0 */1 * * *', getOnce);
+const job = new cronJob('0 0 */1 * * *', getData);
 
 job.start();
 
@@ -183,7 +183,7 @@ function getData() {
                 quantity: 0
             }
             if (baseArr[j] !== undefined && checkingArr[j] !== undefined) {
-                if (baseArr[j].quantity > checkingArr[j].quantity) {
+                if (baseArr[j].quantity > checkingArr[j].quantity ?? (baseArr[j].quantity - checkingArr[j].quantity) > 100) {
                     reqObject.sku = checkingArr[j].sku;
                     reqObject.quantity = checkingArr[j].quantity;
                     reqObject.diff = baseArr[j].quantity - checkingArr[j].quantity;
@@ -309,7 +309,7 @@ function getVariables() {
                 quantity: 0
             }
             if (baseArr[j] !== undefined && checkingArr[j] !== undefined) {
-                if (baseArr[j].quantity > checkingArr[j].quantity && (baseArr[j].quantity - checkingArr[j].quantity) > 200) {
+                if (baseArr[j].quantity > checkingArr[j].quantity && (baseArr[j].quantity - checkingArr[j].quantity) > 100) {
                     reqObject.sku = checkingArr[j].sku;
                     reqObject.quantity = checkingArr[j].quantity;
                     reqObject.diff = baseArr[j].quantity - checkingArr[j].quantity;
