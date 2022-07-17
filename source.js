@@ -183,7 +183,7 @@ function getData() {
                 quantity: 0
             }
             if (baseArr[j] !== undefined && checkingArr[j] !== undefined) {
-                if (baseArr[j].quantity > checkingArr[j].quantity ?? (baseArr[j].quantity - checkingArr[j].quantity) > 100) {
+                if (baseArr[j].quantity > checkingArr[j].quantity) {
                     reqObject.sku = checkingArr[j].sku;
                     reqObject.quantity = checkingArr[j].quantity;
                     reqObject.diff = baseArr[j].quantity - checkingArr[j].quantity;
@@ -309,7 +309,7 @@ function getVariables() {
                 quantity: 0
             }
             if (baseArr[j] !== undefined && checkingArr[j] !== undefined) {
-                if (baseArr[j].quantity > checkingArr[j].quantity && (baseArr[j].quantity - checkingArr[j].quantity) > 100) {
+                if (baseArr[j].quantity > checkingArr[j].quantity) {
                     reqObject.sku = checkingArr[j].sku;
                     reqObject.quantity = checkingArr[j].quantity;
                     reqObject.diff = baseArr[j].quantity - checkingArr[j].quantity;
@@ -457,9 +457,12 @@ function postData(name) {
             let checkingDiff = getDifference(checkingArr, baseArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
 
             for (let j = 0; j < firstArray.length; j++) {
-                secondArray[j].diff += firstArray[j].diff;
+                if((secondArray[j].diff += firstArray[j].diff) > 100) {
 
-                readyToGoArray.push(secondArray[j]);
+                    secondArray[j].diff += firstArray[j].diff;
+
+                    readyToGoArray.push(secondArray[j]);
+                }
             }
 
             baseDiff.forEach((element) => {
@@ -475,9 +478,11 @@ function postData(name) {
             let checkingDiff = getDifference(checkingArr, readyToGoArray).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
 
             for (let j = 0; j < firstArray.length; j++) {
-                secondArray[j].diff += firstArray[j].diff;
-                readyToGoArray.splice(j, 1);
-                readyToGoArray.push(secondArray[j]);
+                if((secondArray[j].diff += firstArray[j].diff) > 100) {
+                    secondArray[j].diff += firstArray[j].diff;
+                    readyToGoArray.splice(j, 1);
+                    readyToGoArray.push(secondArray[j]);
+                }
             }
 
             checkingDiff.forEach((element) => {
