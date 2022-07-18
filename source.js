@@ -456,22 +456,6 @@ function postData(name) {
             let baseDiff = getDifference(baseArr, checkingArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
             let checkingDiff = getDifference(checkingArr, baseArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
 
-
-            fs.writeFile(`firstArray.json`, JSON.stringify(firstArray), function (err) {
-                if (err) throw err;
-            });
-
-            fs.writeFile(`secondArray.json`, JSON.stringify(secondArray), function (err) {
-                if (err) throw err;
-            });
-            fs.writeFile(`diff1Array${i}.json`, JSON.stringify(checkingDiff), function (err) {
-                if (err) throw err;
-            });
-
-            fs.writeFile(`diff2Array${i}.json`, JSON.stringify(baseDiff), function (err) {
-                if (err) throw err;
-            });
-
             for (let j = 0; j < firstArray.length; j++) {
                     secondArray[j].diff = firstArray[j].diff + secondArray[j].diff;
                     readyToGoArray.push(secondArray[j]);
@@ -491,22 +475,6 @@ function postData(name) {
             let checkingDiff = getDifference(checkingArr, readyToGoArray).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
 
             let baseDiff = getDifference(readyToGoArray, checkingArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
-
-
-            fs.writeFile(`firstArray${i}.json`, JSON.stringify(firstArray), function (err) {
-                if (err) throw err;
-            });
-
-            fs.writeFile(`secondArray${i}.json`, JSON.stringify(secondArray), function (err) {
-                if (err) throw err;
-            });
-            fs.writeFile(`diff1Array${i}.json`, JSON.stringify(checkingDiff), function (err) {
-                if (err) throw err;
-            });
-
-            fs.writeFile(`diff2Array${i}.json`, JSON.stringify(baseDiff), function (err) {
-                if (err) throw err;
-            });
 
             for (let j = 0; j < firstArray.length; j++) {
                     secondArray[j].diff = firstArray[j].diff + secondArray[j].diff;
