@@ -128,7 +128,7 @@ function getData() {
         let rawBase;
 
         if(hourNow.toString() === "00") {
-            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T23.json`);
+            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow - 1}T23.json`);
         } else {
             rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourNow - 1}.json`);
         }
@@ -254,7 +254,7 @@ function getVariables() {
         let rawBase;
 
         if(hourNow.toString() === "00") {
-            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T23-variables.json`);
+            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow - 1}T23-variables.json`);
         } else {
             rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourNow - 1}-variables.json`);
         }
@@ -450,8 +450,27 @@ function postData(name) {
 
 
         if (i === 0){
-            let firstArray = getIntersection(baseArr, checkingArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
-            let secondArray = getIntersection(checkingArr, baseArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
+
+	function intersection_destructive(a, b)
+		{
+			  var result = [];
+			  while( a.length > 0 && b.length > 0 )
+				  {  
+					       if      (a.sku[0] < b.sku[0] ){ a.shift(); }
+					       else if (a.sku[0] > b.sku[0] ){ b.shift(); }
+					       else /* they're equal */
+						       {
+							              result.push(a.shift());
+							              b.shift();
+							            }
+					    }
+
+			  return result;
+		}
+
+
+            let firstArray = intersection_destructive(baseArr, checkingArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
+            let secondArray = intersection_destructive(checkingArr, baseArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
 
             let baseDiff = getDifference(baseArr, checkingArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
             let checkingDiff = getDifference(checkingArr, baseArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
@@ -472,18 +491,47 @@ function postData(name) {
                 readyToGoArray.push(element);
             })
         } else {
-            let firstArray = getIntersection(readyToGoArray, checkingArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
-            let secondArray = getIntersection(checkingArr, readyToGoArray).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
+            function intersection_destructive(a, b)
+		{
+			  var result = [];
+			  while( a.length > 0 && b.length > 0 )
+				  {  
+					       if      (a.sku[0] < b.sku[0] ){ a.shift(); }
+					       else if (a.sku[0] > b.sku[0] ){ b.shift(); }
+					       else /* they're equal */
+						       {
+							              result.push(a.shift());
+							              b.shift();
+							            }
+					    }
 
+			  return result;
+		}
+
+		let firstArray = intersection_destructive(checkingArr, readyToGoArray).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
+		let secondArray = intersection_destructive(readyToGoArray, checkingArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
             let checkingDiff = getDifference(checkingArr, readyToGoArray).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
 
-            for (let j = 0; j < firstArray.length; j++) {
-                if((secondArray[j].diff += firstArray[j].diff) > 100) {
+		            let baseDiff = getDifference(readyToGoArray, checkingArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
+
+         
+            for (let j = 0; j < firstArray.length; j++){
+		
+			console.log("first");
+		    console.log(firstArray[j]);
+		    console.log("second");
+		    console.log(secondArray[j]);
+
+               
                     secondArray[j].diff += firstArray[j].diff;
                     readyToGoArray.splice(j, 1);
                     readyToGoArray.push(secondArray[j]);
-                }
+             
             }
+
+		baseDiff.forEach((element) => {
+			                readyToGoArray.push(element);
+			            })
 
             checkingDiff.forEach((element) => {
                 readyToGoArray.push(element);
