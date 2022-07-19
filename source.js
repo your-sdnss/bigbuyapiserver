@@ -106,6 +106,20 @@ function getData() {
         let checkingArr = [];
 
 
+	  let firstNum = hourNow.split("")[0];
+	    let secondNum = hourNow.split("")[1];
+
+	    let hourMin;
+
+	    if (firstNum === "0") {
+		    	secondNum -= 1;
+		    hourMin = firstNum.concat(secondNum);
+	    } else {
+		hourMin = hourNow - 1;
+	    }
+
+	
+
         for (let id1 of data) {
             let obj = {
                 sku: "",
@@ -127,11 +141,22 @@ function getData() {
 
         let rawBase;
 
+	let yesterday = dateRaw.setDate(dateRaw.getDate() - 1);
+	let dayYesterday = yesterday.toLocaleString('en-GB', {timeZone: 'Europe/Kiev'});
+	let dayY = dayYesterday.split("/")[0];
+
+
+
         if (hourNow.toString() === "00") {
-            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow - 1}T23.json`);
-        } else {
-            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourNow - 1}.json`);
-        }
+            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T23.json`);
+        } 
+	if (hourNow.toString() === "01") {
+		rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T00.json`);
+	}
+	 else {
+		 console.log(hourNow);
+ rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourMin}.json`);
+	}
         let baseArr = JSON.parse(rawBase);
 
 
@@ -231,6 +256,10 @@ function getVariables() {
 
         let checkingArr = [];
 
+	    let firstNum = hourNow.split("")[0];
+	    let secondNum = hourNow.split("")[1];
+	    let hourMin;if (firstNum === "0") {secondNum -= 1;hourMin = firstNum.concat(secondNum);}
+	    else {hourMin = hourNow - 1;}
 
         for (let id1 of data) {
             let obj = {
@@ -253,11 +282,16 @@ function getVariables() {
 
         let rawBase;
 
+	    let yesterday = dateRaw.setDate(dateRaw.getDate() - 1);
+	    let dateYest = yesterday.toLocaleString('en-GB', {timeZone: 'Europe/Kiev'});
+		let dayY = dateYest.split("/")[0];
+
         if (hourNow.toString() === "00") {
-            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow - 1}T23-variables.json`);
-        } else {
-            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourNow - 1}-variables.json`);
+            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T23-variables.json`);
         }
+	if(hourNow.toString() === "01"){
+		rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T00.json`);
+	} else {rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourMin}.json`);                                                                                }
         let baseArr = JSON.parse(rawBase);
 
 
@@ -326,6 +360,7 @@ function getVariables() {
             if (err) throw err;
             fs.writeFile(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`, JSON.stringify(json), function (err) {
                 if (err) throw err;
+		    console.log("Append");
             });
         })
 
@@ -362,6 +397,8 @@ app.get('/get-dates', ((req, res) => {
     let rawDates = fs.readFileSync('dateArr.json');
     let dates = JSON.parse(rawDates);
 
+	console.log("get dates");
+
     res.json(dates);
 }));
 
@@ -372,6 +409,8 @@ app.post('/new-items', ((req, res) => {
 
 
     let data = postData(name);
+
+	console.log("new item")
 
 
     emitter.emit("newItem", data);
