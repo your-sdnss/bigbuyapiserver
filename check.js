@@ -113,9 +113,11 @@ function getData() {
         if (firstNum === "0") {
             secondNum -= 1;
             hourMin = firstNum.concat(secondNum);
-        } else {
+        } else if (firstNum === "1" && secondNum === "0") {
+		hourMin = "09";
+	} else {
             hourMin = hourNow - 1;
-        }
+        } 
 
 
 
@@ -231,7 +233,7 @@ function getData() {
             });
         })
 
-        getVariables;
+        getVariables();
 
     }).catch(function (error) {
         console.log(error);
@@ -257,7 +259,9 @@ function getVariables() {
 
         let firstNum = hourNow.split("")[0];
         let secondNum = hourNow.split("")[1];
-        let hourMin;if (firstNum === "0") {secondNum -= 1;hourMin = firstNum.concat(secondNum);}
+        let hourMin;if (firstNum === "0") {secondNum -= 1;hourMin = firstNum.concat(secondNum);} else if (firstNum === "1" && secondNum === "0") {
+	hourMin = "09";
+	}
         else {hourMin = hourNow - 1;}
 
         for (let id1 of data) {
