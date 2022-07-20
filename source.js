@@ -182,4 +182,4 @@ function postData(name) {
 
 app.use(express.static(path.resolve(__dirname, '../client/build')));
 
-app.listen(PORT, () => console.log('server is started'));
+app.listen(5000, () => console.log('server is started'));

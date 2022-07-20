@@ -4,9 +4,11 @@
   "description": "",
   "main": "source.js",
   "scripts": {
-    "start": "node source.js",
+    "start": "node source.js"
+    ,
+    "startCheck": "node check.js",
     "build": "cd ../client && npm run-script start",
-    "launch": "concurrently \"npm run start\" \"npm run build\""
+    "launch": "concurrently \"npm run startCheck\" \"npm run build\""
   },
   "author": "",
   "license": "ISC",

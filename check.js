@@ -231,7 +231,7 @@ function getData() {
             });
         })
 
-        getVariables();
+        getVariables;
 
     }).catch(function (error) {
         console.log(error);
@@ -271,7 +271,7 @@ function getVariables() {
             checkingArr.push(obj);
         }
 
-        console.log(checkingArr);
+       //console.log(checkingArr);
 
         fs.writeFile(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-variables.json`, JSON.stringify(checkingArr), function (err) {
                 if (err) throw err;
@@ -350,6 +350,9 @@ function getVariables() {
                 }
             }
         }
+
+	    console.log("end");
+
         fs.readFile(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`, function (err, data) {
             var json = JSON.parse(data)
             for (let i = 0; i < reqArray.length; i++) {
@@ -362,6 +365,7 @@ function getVariables() {
                 console.log("Append");
             });
         })
+	console.log("end2");
     }).catch(function (error) {
         console.log(error);
     });
