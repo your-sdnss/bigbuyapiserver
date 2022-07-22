@@ -2,9 +2,10 @@ const axios = require('axios').default;
 require('dotenv').config();
 const token = process.env.API_TOKEN;
 const fs = require("fs");
+const {compileETag} = require("express/lib/utils");
 const cronJob = require('cron').CronJob;
 
-const job = new cronJob('0 0 */1 * * *', getData);
+const job = new cronJob('0 */1 * * * *', getData);
 
 job.start();
 
@@ -15,37 +16,36 @@ const instance = axios.create({
 
 
 function getOnce() {
+
     instance.get('/catalog/productsvariationsstock').then(response => {
 
-        let {data} = response;
-
+        let { data } = response;
         let dateRaw = new Date();
         let dateNow = dateRaw.toLocaleString('en-GB', {timeZone: 'Europe/Kiev'});
         let yearNow = dateNow.split("/")[2].split(",")[0];
         let monthNow = dateNow.split("/")[1];
         let dayNow = dateNow.split("/")[0];
+
         let hourNow = dateNow.split("/")[2].split(",")[1].replace(/\s/gm, "").split(":")[0];
 
         let checkingArr = [];
-
         for (let id1 of data) {
             let obj = {
                 sku: "",
                 quantity: 0
             }
             obj.sku = id1.sku;
+
             obj.quantity = id1.stocks[0].quantity;
-
             checkingArr.push(obj);
+
+
         }
-
-
         fs.writeFile(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-variables.json`, JSON.stringify(checkingArr), function (err) {
                 if (err) throw err;
                 console.log('complete');
             }
         );
-    }).catch(function (error) {
         console.log(error);
     });
     instance.get('/catalog/productsstock').then(response => {
@@ -88,12 +88,14 @@ function getOnce() {
 }
 
 
+const stockData = instance.get('/catalog/productsstock');
+
+const variableData = instance.get('/catalog/productsvariationsstock');
+
+getData();
+
 function getData() {
-    instance.get('/catalog/productsstock').then(response => {
-
-        let {data} = response;
-
-        console.log(data);
+    axios.all([stockData, variableData]).then(axios.spread((...responses) => {
 
         let dateRaw = new Date();
         let dateNow = dateRaw.toLocaleString('en-GB', {timeZone: 'Europe/Kiev'});
@@ -103,7 +105,6 @@ function getData() {
         let hourNow = dateNow.split("/")[2].split(",")[1].replace(/\s/gm, "").split(":")[0];
 
         let checkingArr = [];
-
 
         let firstNum = hourNow.split("")[0];
         let secondNum = hourNow.split("")[1];
@@ -114,14 +115,15 @@ function getData() {
             secondNum -= 1;
             hourMin = firstNum.concat(secondNum);
         } else if (firstNum === "1" && secondNum === "0") {
-		hourMin = "09";
-	} else {
+            hourMin = "09";
+        } else {
             hourMin = hourNow - 1;
-        } 
+        }
 
+        const stockResponse = responses[0].data;
+        const variableResponse = responses[1].data;
 
-
-        for (let id1 of data) {
+        for (let id1 of stockResponse) {
             let obj = {
                 sku: "",
                 quantity: 0
@@ -132,13 +134,7 @@ function getData() {
             checkingArr.push(obj);
         }
 
-        console.log(checkingArr);
-
-        fs.writeFile(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}.json`, JSON.stringify(checkingArr), function (err) {
-                if (err) throw err;
-                console.log('complete');
-            }
-        );
+        fs.writeFileSync(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}.json`, JSON.stringify(checkingArr));
 
         let rawBase;
 
@@ -147,19 +143,16 @@ function getData() {
         let dayY = dayYesterday.split("/")[0];
 
 
-
         if (hourNow.toString() === "00") {
             rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T23.json`);
-        }
-        if (hourNow.toString() === "01") {
+        } else if (hourNow.toString() === "01") {
             rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T00.json`);
-        }
-        else {
+        } else {
             console.log(hourNow);
             rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourMin}.json`);
         }
-        let baseArr = JSON.parse(rawBase);
 
+        let baseArr = JSON.parse(rawBase);
 
         var biggestKey;
 
@@ -177,30 +170,13 @@ function getData() {
             });
         }
 
-        let difference = getDifference(baseArr, checkingArr);
-        let newItems = getDifference(checkingArr, baseArr);
+        console.log("Difference");
 
-        for (let i = 0; i < baseArr.length; i++) {
-            for (let j = 0; j < difference.length; j++) {
-                if (baseArr[i].sku === difference[j].sku) {
-                    baseArr.splice(i, 1);
-                }
-            }
-        }
-        let newObject;
-        for (let i = 0; i < checkingArr.length; i++) {
-            for (let j = 0; j < newItems.length; j++) {
-                if (checkingArr[i].sku === newItems[j].sku) {
-                    newObject = checkingArr[i];
-                    checkingArr.splice(i, 1);
-                    checkingArr.push(newObject);
-                }
-            }
-        }
+        baseArr = baseArr.filter(item1 => checkingArr.some(item2 => item1.sku === item2.sku))
+        checkingArr = checkingArr.filter(item1 => baseArr.some(item2 => item1.sku === item2.sku))
 
 
         let reqArray = []
-
 
         for (let j = 0; j < biggestKey; j++) {
             let reqObject = {
@@ -214,57 +190,22 @@ function getData() {
                     reqObject.quantity = checkingArr[j].quantity;
                     reqObject.diff = baseArr[j].quantity - checkingArr[j].quantity;
                     reqArray.push(reqObject);
+                    console.log(reqObject);
                 }
             }
         }
 
-        fs.writeFile(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`, JSON.stringify(reqArray), function (err) {
-            if (err) throw err;
-            console.log('complete');
-        });
+        console.log(reqArray);
 
-        fs.readFile('dateArr.json', function (err, data) {
-            var json = JSON.parse(data)
-            json.push(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`)
 
-            fs.writeFile(`dateArr.json`, JSON.stringify(json), function (err) {
-                if (err) throw err;
-                console.log('Append');
-            });
-        })
+        //variables start
 
-        getVariables();
 
-    }).catch(function (error) {
-        console.log(error);
-    });
-}
+        console.log("variables");
 
-function getVariables() {
+        let varCheckingArr = [];
 
-    instance.get('/catalog/productsvariationsstock').then(response => {
-
-        let {data} = response;
-
-        console.log(data);
-
-        let dateRaw = new Date();
-        let dateNow = dateRaw.toLocaleString('en-GB', {timeZone: 'Europe/Kiev'});
-        let yearNow = dateNow.split("/")[2].split(",")[0];
-        let monthNow = dateNow.split("/")[1];
-        let dayNow = dateNow.split("/")[0];
-        let hourNow = dateNow.split("/")[2].split(",")[1].replace(/\s/gm, "").split(":")[0];
-
-        let checkingArr = [];
-
-        let firstNum = hourNow.split("")[0];
-        let secondNum = hourNow.split("")[1];
-        let hourMin;if (firstNum === "0") {secondNum -= 1;hourMin = firstNum.concat(secondNum);} else if (firstNum === "1" && secondNum === "0") {
-	hourMin = "09";
-	}
-        else {hourMin = hourNow - 1;}
-
-        for (let id1 of data) {
+        for (let id1 of variableResponse) {
             let obj = {
                 sku: "",
                 quantity: 0
@@ -272,105 +213,66 @@ function getVariables() {
             obj.sku = id1.sku;
             obj.quantity = id1.stocks[0].quantity;
 
-            checkingArr.push(obj);
+            varCheckingArr.push(obj);
         }
 
-       //console.log(checkingArr);
+        fs.writeFileSync(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-variables.json`, JSON.stringify(varCheckingArr));
 
-        fs.writeFile(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-variables.json`, JSON.stringify(checkingArr), function (err) {
-                if (err) throw err;
-                console.log('complete');
-            }
-        );
+        console.log("variables-ready")
 
-        let rawBase;
-
-        let yesterday = dateRaw.setDate(dateRaw.getDate() - 1);
-        let dateYest = yesterday.toLocaleString('en-GB', {timeZone: 'Europe/Kiev'});
-        let dayY = dateYest.split("/")[0];
+        let rawCheckBase;
 
         if (hourNow.toString() === "00") {
-            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T23-variables.json`);
-        }
-        if(hourNow.toString() === "01"){
-            rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T00.json`);
-        } else {rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourMin}.json`);                                                                                }
-        let baseArr = JSON.parse(rawBase);
-
-
-        var biggestKey;
-
-        if (baseArr.length > checkingArr.length) {
-            biggestKey = baseArr.length;
+            rawCheckBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T23-variables.json`);
+        } else if (hourNow.toString() === "01") {
+            rawCheckBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T00.json`);
         } else {
-            biggestKey = checkingArr.length;
+            rawCheckBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourMin}.json`);
+        }
+        let checkBaseArr = JSON.parse(rawCheckBase);
+
+        console.log("difference")
+
+        let varBaseInt = checkBaseArr.filter(item1 => varCheckingArr.some(item2 => item1.sku === item2.sku))
+        let varCheckInt = varCheckingArr.filter(item1 => checkBaseArr.some(item2 => item1.sku === item2.sku))
+
+        let varBiggestKey;
+
+        if (varBaseInt.length > varCheckInt.length) {
+            varBiggestKey = varBaseInt.length;
+        } else {
+            varBiggestKey = varCheckInt.length;
         }
 
-        function getDifference(array1, array2) {
-            return array1.filter(object1 => {
-                return !array2.some(object2 => {
-                    return object1.sku === object2.sku;
-                });
-            });
-        }
-
-        let difference = getDifference(baseArr, checkingArr);
-        let newItems = getDifference(checkingArr, baseArr);
-
-        for (let i = 0; i < baseArr.length; i++) {
-            for (let j = 0; j < difference.length; j++) {
-                if (baseArr[i].sku === difference[j].sku) {
-                    baseArr.splice(i, 1);
-                }
-            }
-        }
-        let newObject;
-        for (let i = 0; i < checkingArr.length; i++) {
-            for (let j = 0; j < newItems.length; j++) {
-                if (checkingArr[i].sku === newItems[j].sku) {
-                    newObject = checkingArr[i];
-                    checkingArr.splice(i, 1);
-                    checkingArr.push(newObject);
-                }
-            }
-        }
-
-
-        let reqArray = []
-
-
-        for (let j = 0; j < biggestKey; j++) {
-            let reqObject = {
+        for (let j = 0; j < varBiggestKey; j++) {
+            let varReqObject = {
                 sku: "",
                 diff: 0,
                 quantity: 0
             }
-            if (baseArr[j] !== undefined && checkingArr[j] !== undefined) {
-                if (baseArr[j].quantity > checkingArr[j].quantity) {
-                    reqObject.sku = checkingArr[j].sku;
-                    reqObject.quantity = checkingArr[j].quantity;
-                    reqObject.diff = baseArr[j].quantity - checkingArr[j].quantity;
-                    reqArray.push(reqObject);
+            if (varBaseInt[j] !== undefined && varCheckInt[j] !== undefined) {
+                if (varBaseInt[j].quantity > varCheckInt[j].quantity) {
+                    varReqObject.sku = varCheckInt[j].sku;
+                    varReqObject.quantity = varCheckInt[j].quantity;
+                    varReqObject.diff = varBaseInt[j].quantity - varCheckInt[j].quantity;
+                    reqArray.push(varReqObject);
+                    console.log(varReqObject);
                 }
             }
         }
 
-	    console.log("end");
+        //TODO убрать дифференсы и сделать под общим
 
-        fs.readFile(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`, function (err, data) {
+        fs.writeFileSync(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`, JSON.stringify(reqArray));
+        fs.readFile('dateArr.json', function (err, data) {
             var json = JSON.parse(data)
-            for (let i = 0; i < reqArray.length; i++) {
-                json.push(reqArray[i])
-            }
-            console.log(json)
-            if (err) throw err;
-            fs.writeFile(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`, JSON.stringify(json), function (err) {
+            json.push(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`)
+            fs.writeFile(`dateArr.json`, JSON.stringify(json), function (err) {
                 if (err) throw err;
-                console.log("Append");
+                console.log('Append');
             });
         })
-	console.log("end2");
-    }).catch(function (error) {
-        console.log(error);
-    });
+    })).catch(errors => {
+        console.error(errors);
+    })
 }
