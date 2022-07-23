@@ -5,7 +5,7 @@ const fs = require("fs");
 const {compileETag} = require("express/lib/utils");
 const cronJob = require('cron').CronJob;
 
-const job = new cronJob('0 */1 * * * *', getData);
+const job = new cronJob('0 0 */1 * * *', getData);
 
 job.start();
 
@@ -46,6 +46,7 @@ function getOnce() {
                 console.log('complete');
             }
         );
+    }).catch(function(error){    
         console.log(error);
     });
     instance.get('/catalog/productsstock').then(response => {
@@ -91,8 +92,6 @@ function getOnce() {
 const stockData = instance.get('/catalog/productsstock');
 
 const variableData = instance.get('/catalog/productsvariationsstock');
-
-getData();
 
 function getData() {
     axios.all([stockData, variableData]).then(axios.spread((...responses) => {
