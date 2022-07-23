@@ -118,6 +118,7 @@ function getData() {
         } else {
             hourMin = hourNow - 1;
         }
+	    console.log(hourMin);
 
         const stockResponse = responses[0].data;
         const variableResponse = responses[1].data;
@@ -222,11 +223,10 @@ function getData() {
         let rawCheckBase;
 
         if (hourNow.toString() === "00") {
-            rawCheckBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T23-variables.json`);
-        } else if (hourNow.toString() === "01") {
-            rawCheckBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T00.json`);
+            rawCheckBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T23-variables.json`)} else if (hourNow.toString() === "01") {
+            rawCheckBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T00-variables.json`);
         } else {
-            rawCheckBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourMin}.json`);
+            rawCheckBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourMin}-variables.json`);
         }
         let checkBaseArr = JSON.parse(rawCheckBase);
 
