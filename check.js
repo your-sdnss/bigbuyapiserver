@@ -162,18 +162,10 @@ function getData() {
             biggestKey = checkingArr.length;
         }
 
-        function getDifference(array1, array2) {
-            return array1.filter(object1 => {
-                return !array2.some(object2 => {
-                    return object1.sku === object2.sku;
-                });
-            });
-        }
-
         console.log("Difference");
 
-        baseArr = baseArr.filter(item1 => checkingArr.some(item2 => item1.sku === item2.sku))
-        checkingArr = checkingArr.filter(item1 => baseArr.some(item2 => item1.sku === item2.sku))
+        baseArr = checkingArr.filter(item1 => baseArr.some(item2 => item1.sku === item2.sku)).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0))
+        checkingArr = baseArr.filter(item1 => checkingArr.some(item2 => item1.sku === item2.sku)).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0))
 
 
         let reqArray = []
@@ -223,7 +215,8 @@ function getData() {
         let rawCheckBase;
 
         if (hourNow.toString() === "00") {
-            rawCheckBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T23-variables.json`)} else if (hourNow.toString() === "01") {
+            rawCheckBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T23-variables.json`)
+        } else if (hourNow.toString() === "01") {
             rawCheckBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T00-variables.json`);
         } else {
             rawCheckBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourMin}-variables.json`);
@@ -232,8 +225,8 @@ function getData() {
 
         console.log("difference")
 
-        let varBaseInt = checkBaseArr.filter(item1 => varCheckingArr.some(item2 => item1.sku === item2.sku))
-        let varCheckInt = varCheckingArr.filter(item1 => checkBaseArr.some(item2 => item1.sku === item2.sku))
+        let varBaseInt = checkBaseArr.filter(item1 => varCheckingArr.some(item2 => item1.sku === item2.sku)).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
+        let varCheckInt = varCheckingArr.filter(item1 => checkBaseArr.some(item2 => item1.sku === item2.sku)).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
 
         let varBiggestKey;
 
