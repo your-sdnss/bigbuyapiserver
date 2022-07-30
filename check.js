@@ -4,9 +4,9 @@ const token = process.env.API_TOKEN;
 const fs = require("fs");
 const cronJob = require('cron').CronJob;
 
-// const job = new cronJob('0 0 */1 * * *', getData);
+const job = new cronJob('0 */10 * * * *', getData);
 
-// job.start();
+job.start();
 
 
 const instance = axios.create({
@@ -92,8 +92,6 @@ function getOnce() {
 const stockData = instance.get('/catalog/productsstock');
 
 const variableData = instance.get('/catalog/productsvariationsstock');
-
-getData;
 
 function getData() {
     axios.all([stockData, variableData]).then(axios.spread((...responses) => {
