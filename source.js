@@ -98,16 +98,6 @@ function postData(name) {
         } catch (e) {
             console.log(e);
         }
-
-
-        function getIntersection(array1, array2) {
-            return array1.filter(object1 => {
-                return array2.some(object2 => {
-                    return object1.sku === object2.sku;
-                });
-            });
-        }
-
         function getDifference(array1, array2) {
             return array1.filter(object1 => {
                 return !array2.some(object2 => {

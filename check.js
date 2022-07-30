@@ -2,7 +2,6 @@ const axios = require('axios').default;
 require('dotenv').config();
 const token = process.env.API_TOKEN;
 const fs = require("fs");
-const {compileETag} = require("express/lib/utils");
 const cronJob = require('cron').CronJob;
 
 const job = new cronJob('0 0 */1 * * *', getData);
@@ -110,6 +109,14 @@ function getData() {
 
         let hourMin;
 
+        function getIntersection(array1, array2) {
+            return array1.filter(object1 => {
+                return array2.some(object2 => {
+                    return object1.sku === object2.sku;
+                });
+            });
+        }
+
         if (firstNum === "0") {
             secondNum -= 1;
             hourMin = firstNum.concat(secondNum);
@@ -164,8 +171,8 @@ function getData() {
 
         console.log("Difference");
 
-        baseArr = checkingArr.filter(item1 => baseArr.some(item2 => item1.sku === item2.sku)).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0))
-        checkingArr = baseArr.filter(item1 => checkingArr.some(item2 => item1.sku === item2.sku)).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0))
+        baseArr = getIntersection(baseArr, checkingArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0))
+        checkingArr = getIntersection(checkingArr, baseArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0))
 
 
         let reqArray = []
@@ -225,8 +232,8 @@ function getData() {
 
         console.log("difference")
 
-        let varBaseInt = checkBaseArr.filter(item1 => varCheckingArr.some(item2 => item1.sku === item2.sku)).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
-        let varCheckInt = varCheckingArr.filter(item1 => checkBaseArr.some(item2 => item1.sku === item2.sku)).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
+        let varBaseInt = getIntersection(checkBaseArr, varCheckingArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
+        let varCheckInt = getIntersection(varCheckingArr, checkBaseArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
 
         let varBiggestKey;
 
@@ -252,8 +259,6 @@ function getData() {
                 }
             }
         }
-
-        //TODO убрать дифференсы и сделать под общим
 
         fs.writeFileSync(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`, JSON.stringify(reqArray));
         fs.readFile('dateArr.json', function (err, data) {
