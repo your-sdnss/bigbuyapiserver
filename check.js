@@ -4,9 +4,10 @@ const token = process.env.API_TOKEN;
 const fs = require("fs");
 const cronJob = require('cron').CronJob;
 
-const job = new cronJob('0 0 */1 * * *', getData);
+// const job = new cronJob('0 0 */1 * * *', getData);
 
-job.start();
+// job.start();
+
 
 const instance = axios.create({
     baseURL: 'https://api.bigbuy.eu/rest',
@@ -92,6 +93,8 @@ const stockData = instance.get('/catalog/productsstock');
 
 const variableData = instance.get('/catalog/productsvariationsstock');
 
+getData;
+
 function getData() {
     axios.all([stockData, variableData]).then(axios.spread((...responses) => {
 
@@ -171,23 +174,26 @@ function getData() {
 
         console.log("Difference");
 
-        baseArr = getIntersection(baseArr, checkingArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0))
-        checkingArr = getIntersection(checkingArr, baseArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0))
+        let baseArrNew = getIntersection(baseArr, checkingArr)
+        let checkingArrNew = getIntersection(checkingArr, baseArr)
+
+        baseArrNew.sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
+        checkingArrNew.sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
 
 
         let reqArray = []
 
         for (let j = 0; j < biggestKey; j++) {
-            let reqObject = {
-                sku: "",
-                diff: 0,
-                quantity: 0
-            }
-            if (baseArr[j] !== undefined && checkingArr[j] !== undefined) {
-                if (baseArr[j].quantity > checkingArr[j].quantity) {
-                    reqObject.sku = checkingArr[j].sku;
-                    reqObject.quantity = checkingArr[j].quantity;
-                    reqObject.diff = baseArr[j].quantity - checkingArr[j].quantity;
+            if (baseArrNew[j] !== undefined && checkingArrNew[j] !== undefined) {
+                if (baseArrNew[j].quantity > checkingArrNew[j].quantity) {
+                    let reqObject = {
+                        sku: "",
+                        diff: 0,
+                        quantity: 0
+                    }
+                    reqObject.sku = checkingArrNew[j].sku;
+                    reqObject.quantity = checkingArrNew[j].quantity;
+                    reqObject.diff = baseArrNew[j].quantity - checkingArrNew[j].quantity;
                     reqArray.push(reqObject);
                     console.log(reqObject);
                 }
@@ -232,8 +238,11 @@ function getData() {
 
         console.log("difference")
 
-        let varBaseInt = getIntersection(checkBaseArr, varCheckingArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
-        let varCheckInt = getIntersection(varCheckingArr, checkBaseArr).sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
+        let varBaseInt = getIntersection(checkBaseArr, varCheckingArr)
+        let varCheckInt = getIntersection(varCheckingArr, checkBaseArr)
+
+        varBaseInt.sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
+        varCheckInt.sort((a, b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
 
         let varBiggestKey;
 
@@ -244,13 +253,13 @@ function getData() {
         }
 
         for (let j = 0; j < varBiggestKey; j++) {
-            let varReqObject = {
-                sku: "",
-                diff: 0,
-                quantity: 0
-            }
             if (varBaseInt[j] !== undefined && varCheckInt[j] !== undefined) {
                 if (varBaseInt[j].quantity > varCheckInt[j].quantity) {
+                    let varReqObject = {
+                        sku: "",
+                        diff: 0,
+                        quantity: 0
+                    }
                     varReqObject.sku = varCheckInt[j].sku;
                     varReqObject.quantity = varCheckInt[j].quantity;
                     varReqObject.diff = varBaseInt[j].quantity - varCheckInt[j].quantity;
