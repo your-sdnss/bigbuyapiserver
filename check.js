@@ -146,10 +146,14 @@ function getData() {
 
         let rawBase;
 
-        let yesterday = dateRaw.setDate(dateRaw.getDate() - 1);
-        let dayYesterday = yesterday.toLocaleString('en-GB', {timeZone: 'Europe/Kiev'});
-        let dayY = dayYesterday.split("/")[0];
+        const getYesterday = (dateOnly = false) => {
+            let d = new Date();
+            d.setDate(d.getDate() - 1);
+              d = d.toLocaleString('en-GB', {timeZone: 'Europe/Kiev'});
+            return dateOnly ? new Date(d.toDateString()) : d;
+        };
 
+        let dayY = getYesterday().split("/")[0];
 
         if (hourNow.toString() === "00") {
             rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T23.json`);
@@ -208,13 +212,13 @@ function getData() {
 
         let varCheckingArr = [];
 
-        for (let id1 of variableResponse) {
+        for (let id2 of variableResponse) {
             let obj = {
                 sku: "",
                 quantity: 0
             }
-            obj.sku = id1.sku;
-            obj.quantity = id1.stocks[0].quantity;
+            obj.sku = id2.sku;
+            obj.quantity = id2.stocks[0].quantity;
 
             varCheckingArr.push(obj);
         }
