@@ -185,39 +185,20 @@ function checkBase(stockResponse, date, hourMin){
 
     let reqArray = []
 
-    if (baseArr.length > checkingArr.length) {
-        for (let i = 0; i < checkingArr.length; i++){
-            for(let j = 0; j < baseArr.length; j++){
-                if(checkingArr[i].sku === baseArr[j].sku && checkingArr[i].quantity > baseArr[j].quantity){
-                    let reqObject = {
-                        sku: "",
-                        diff: 0,
-                        quantity: 0
-                    }
-                    reqObject.sku = checkingArr[i].sku;
-                    reqObject.quantity = checkingArr[i].quantity;
-                    reqObject.diff = checkingArr[i].quantity - baseArr[j].quantity;
-                    reqArray.push(reqObject);
-                    console.log(reqObject);
-                }
+    
+    const intersectionBase = baseArr.filter(item1 => checkingArr.some(item2 => item1.sku === item2.sku));
+    const intersectionCheck = checkingArr.filter(item1 => baseArr.some(item2 => item1.sku === item2.sku));
+    
+    let biggestKey = intersectionBase.length > intersectionCheck.length ? intersectionBase.length : intersectionCheck.length;
+
+    for (let i = 0; i < biggestKey; i++){
+        if(intersectionBase.quantity > intersectionCheck.quantity && intersectionBase.sku === intersectionCheck.sku){
+            let reqObject = {
+                sku: intersectionCheck,
+                quantity: intersectionCheck,
+                diff: intersectionBase.quantity - intersectionCheck.quantity
             }
-        }
-    } else {
-        for (let i = 0; i < baseArr.length; i++){
-            for(let j = 0; j < checkingArr.length; j++){
-                if(baseArr[i].sku === checkingArr[j].sku && baseArr[i].quantity > checkingArr[j].quantity){
-                    let reqObject = {
-                        sku: "",
-                        diff: 0,
-                        quantity: 0
-                    }
-                    reqObject.sku = baseArr[i].sku;
-                    reqObject.quantity = baseArr[i].quantity;
-                    reqObject.diff = baseArr[i].quantity - checkingArr[j].quantity;
-                    reqArray.push(reqObject);
-                    console.log(reqObject);
-                }
-            }
+            reqArray.push(reqObject);
         }
     }
 
@@ -269,41 +250,19 @@ function checkVariables(variableResponse, date, hourMin){
 
     let reqArray = []
 
-    if (baseArr.length > checkingArr.length) {
-        for (let i = 0; i < checkingArr.length; i++){
-            for(let j = 0; j < baseArr.length; j++){
-                if(checkingArr[i].sku === baseArr[j].sku && checkingArr[i].quantity > baseArr[j].quantity){
-                    let reqObject = {
-                        sku: "",
-                        diff: 0,
-                        quantity: 0
-                    }
-                    reqObject.sku = checkingArr[i].sku;
-                    reqObject.quantity = checkingArr[i].quantity;
-                    reqObject.diff = checkingArr[i].quantity - baseArr[j].quantity;
-                    reqArray.push(reqObject);
-                    console.log(reqObject);
+    const intersectionBase = baseArr.filter(item1 => checkingArr.some(item2 => item1.sku === item2.sku));
+    const intersectionCheck = checkingArr.filter(item1 => baseArr.some(item2 => item1.sku === item2.sku));
+    
+    let biggestKey = intersectionBase.length > intersectionCheck.length ? intersectionBase.length : intersectionCheck.length;
 
-                }
+    for (let i = 0; i < biggestKey; i++){
+        if(intersectionBase.quantity > intersectionCheck.quantity && intersectionBase.sku === intersectionCheck.sku){
+            let reqObject = {
+                sku: intersectionCheck,
+                quantity: intersectionCheck,
+                diff: intersectionBase.quantity - intersectionCheck.quantity
             }
-        }
-    } else {
-        for (let i = 0; i < baseArr.length; i++){
-            for(let j = 0; j < checkingArr.length; j++){
-                if(baseArr[i].sku === checkingArr[j].sku && baseArr[i].quantity > checkingArr[j].quantity){
-                    let reqObject = {
-                        sku: "",
-                        diff: 0,
-                        quantity: 0
-                    }
-                    reqObject.sku = baseArr[i].sku;
-                    reqObject.quantity = baseArr[i].quantity;
-                    reqObject.diff = baseArr[i].quantity - checkingArr[j].quantity;
-                    reqArray.push(reqObject);
-                    console.log(reqObject);
-
-                }
-            }
+            reqArray.push(reqObject);
         }
     }
 
