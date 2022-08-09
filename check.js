@@ -95,12 +95,18 @@ const variableData = instance.get('/catalog/productsvariationsstock');
 function getData() {
     axios.all([stockData, variableData]).then(axios.spread((...responses) => {
 
-        function checkVariables(variableResponse, date, hourMin){
-            let checkingArr = [];
-        
-            let yearNow = date.split("/")[2].split(",")[0];
-            let monthNow = date.split("/")[1];
-            let dayNow = date.split("/")[0];
+        const stockResponse = responses[0].data;
+        const variableResponse = responses[1].data;
+
+        let dateRaw = new Date();
+        let dateNow = dateRaw.toLocaleString('en-GB', {timeZone: 'Europe/Kiev'});
+        let hour = dateNow.split("/")[2].split(",")[1].replace(/\s/gm, "").split(":")[0];
+        let yearNow = dateNow.split("/")[2].split(",")[0];
+        let monthNow = dateNow.split("/")[1];
+        let dayNow = dateNow.split("/")[0];
+
+        let checkingArr = [];
+
             let hourNow = date.split("/")[2].split(",")[1].replace(/\s/gm, "").split(":")[0];
         
             for (let id1 of variableResponse) {
@@ -140,10 +146,10 @@ function getData() {
         
             let reqArray = []
         
-            const intersectionBase = baseArr.filter(item1 => checkingArr.some(item2 => item1.sku === item2.sku));
-            const intersectionCheck = checkingArr.filter(item1 => baseArr.some(item2 => item1.sku === item2.sku));
+            let intersectionBase = baseArr.filter(item1 => checkingArr.some(item2 => item1.sku === item2.sku));
+            let intersectionCheck = checkingArr.filter(item1 => baseArr.some(item2 => item1.sku === item2.sku));
             
-            let biggestKey = intersectionBase.length > intersectionCheck.length ? intersectionBase.length : intersectionCheck.length;
+            biggestKey = intersectionBase.length > intersectionCheck.length ? intersectionBase.length : intersectionCheck.length;
         
             for (let i = 0; i < biggestKey; i++){
                 if(intersectionBase.quantity > intersectionCheck.quantity && intersectionBase.sku === intersectionCheck.sku){
@@ -155,18 +161,9 @@ function getData() {
                     reqArray.push(reqObject);
                 }
             }
-        
-            return reqArray;
-        }
 
-        function checkBase(stockResponse, date, hourMin){
-            let checkingArr = [];
-        
-            let yearNow = date.split("/")[2].split(",")[0];
-            let monthNow = date.split("/")[1];
-            let dayNow = date.split("/")[0];
-            let hourNow = date.split("/")[2].split(",")[1].replace(/\s/gm, "").split(":")[0];
-        
+            checkingArr = [];
+
             for (let id1 of stockResponse) {
                 let obj = {
                     sku: "",
@@ -179,17 +176,8 @@ function getData() {
             }
         
             fs.writeFileSync(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}.json`, JSON.stringify(checkingArr));
-        
-            let rawBase;
-        
-            const getYesterday = (dateOnly = false) => {
-                let d = new Date();
-                d.setDate(d.getDate() - 1);
-                  d = d.toLocaleString('en-GB', {timeZone: 'Europe/Kiev'});
-                return dateOnly ? new Date(d.toDateString()) : d;
-            };
-        
-            let dayY = getYesterday().split("/")[0];
+
+            rawBase = undefined;
         
             if (hourNow.toString() === "00") {
                 rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T23.json`);
@@ -200,13 +188,10 @@ function getData() {
                 rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourMin}.json`);
             }
         
-            let baseArr = JSON.parse(rawBase);
-        
-            let reqArray = []
-        
+            baseArr = JSON.parse(rawBase);        
             
-            const intersectionBase = baseArr.filter(item1 => checkingArr.some(item2 => item1.sku === item2.sku));
-            const intersectionCheck = checkingArr.filter(item1 => baseArr.some(item2 => item1.sku === item2.sku));
+            intersectionBase = baseArr.filter(item1 => checkingArr.some(item2 => item1.sku === item2.sku));
+            intersectionCheck = checkingArr.filter(item1 => baseArr.some(item2 => item1.sku === item2.sku));
             
             let biggestKey = intersectionBase.length > intersectionCheck.length ? intersectionBase.length : intersectionCheck.length;
         
@@ -220,17 +205,6 @@ function getData() {
                     reqArray.push(reqObject);
                 }
             }
-        
-            return reqArray;
-        }
-                
-
-        let dateRaw = new Date();
-        let dateNow = dateRaw.toLocaleString('en-GB', {timeZone: 'Europe/Kiev'});
-        let hour = dateNow.split("/")[2].split(",")[1].replace(/\s/gm, "").split(":")[0];
-        let yearNow = dateNow.split("/")[2].split(",")[0];
-        let monthNow = dateNow.split("/")[1];
-        let dayNow = dateNow.split("/")[0];
 
         let firstNum = hour.split("")[0];
         let secondNum = hour.split("")[1];
@@ -247,16 +221,11 @@ function getData() {
         }
 	    console.log(hourMin);
 
-        const stockResponse = responses[0].data;
-        const variableResponse = responses[1].data;
+        const newAll = reqArray;
 
-        let base = checkBase(stockResponse, dateNow, hourMin);
-        let variables = checkVariables(variableResponse, dateNow, hourMin);
-        const all = [...base, ...variables];
+        newAll.sort((a,b) => a.diff - b.diff);
 
-        all.sort((a,b) => a.diff - b.diff);
-
-        fs.writeFileSync(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`, JSON.stringify(all));
+        fs.writeFileSync(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`, JSON.stringify(newAll));
         fs.readFile('dateArr.json', function (err, data) {
             var json = JSON.parse(data)
             json.push(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`)
