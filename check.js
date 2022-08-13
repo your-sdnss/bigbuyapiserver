@@ -87,13 +87,12 @@ function getOnce() {
     });
 }
 
-
 const stockData = instance.get('/catalog/productsstock');
 
 const variableData = instance.get('/catalog/productsvariationsstock');
 
-function getData() {
-    axios.all([stockData, variableData]).then(axios.spread((...responses) => {
+async function getData() {
+    await axios.all([stockData, variableData]).then(axios.spread((...responses) => {  
 
         const stockResponse = responses[0].data;
         const variableResponse = responses[1].data;
@@ -104,6 +103,21 @@ function getData() {
         let yearNow = dateNow.split("/")[2].split(",")[0];
         let monthNow = dateNow.split("/")[1];
         let dayNow = dateNow.split("/")[0];
+
+        let firstNum = hour.split("")[0];
+        let secondNum = hour.split("")[1];
+
+        let hourMin;
+
+        if (firstNum === "0") {
+            secondNum -= 1;
+            hourMin = firstNum.concat(secondNum);
+        } else if (firstNum === "1" && secondNum === "0") {
+            hourMin = "09";
+        } else {
+            hourMin = hour - 1;
+        }
+	    console.log(hourMin);
 
         let checkingArr = [];
 
@@ -162,7 +176,7 @@ function getData() {
                 }
             }
 
-            checkingArr = [];
+            let checkingArrVar = [];
 
             for (let id1 of stockResponse) {
                 let obj = {
@@ -172,60 +186,41 @@ function getData() {
                 obj.sku = id1.sku;
                 obj.quantity = id1.stocks[0].quantity;
         
-                checkingArr.push(obj);
+                checkingArrVar.push(obj);
             }
         
-            fs.writeFileSync(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}.json`, JSON.stringify(checkingArr));
+            fs.writeFileSync(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}.json`, JSON.stringify(checkingArrVar));
 
-            rawBase = undefined;
+            let rawBaseArr;
         
             if (hourNow.toString() === "00") {
-                rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T23.json`);
+                rawBaseArr = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T23.json`);
             } else if (hourNow.toString() === "01") {
-                rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T00.json`);
+                rawBaseArr = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T00.json`);
             } else {
                 console.log(hourNow);
-                rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourMin}.json`);
+                rawBaseArr = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${hourMin}.json`);
             }
         
-            baseArr = JSON.parse(rawBase);        
+            baseArrVar = JSON.parse(rawBaseArr);        
             
-            intersectionBase = baseArr.filter(item1 => checkingArr.some(item2 => item1.sku === item2.sku));
-            intersectionCheck = checkingArr.filter(item1 => baseArr.some(item2 => item1.sku === item2.sku));
+            intersectionBaseVar = baseArrVar.filter(item1 => checkingArrVar.some(item2 => item1.sku === item2.sku));
+            intersectionCheckVar = checkingArrVar.filter(item1 => baseArrVar.some(item2 => item1.sku === item2.sku));
             
-            let biggestKey = intersectionBase.length > intersectionCheck.length ? intersectionBase.length : intersectionCheck.length;
+            let biggestKeyVar = intersectionBaseVar.length > intersectionCheckVar.length ? intersectionBaseVar.length : intersectionCheckVar.length;
         
-            for (let i = 0; i < biggestKey; i++){
-                if(intersectionBase.quantity > intersectionCheck.quantity && intersectionBase.sku === intersectionCheck.sku){
+            for (let i = 0; i < biggestKeyVar; i++){
+                if(intersectionBaseVar.quantity > intersectionCheckVar.quantity && intersectionBaseVar.sku === intersectionCheckVar.sku){
                     let reqObject = {
-                        sku: intersectionCheck,
-                        quantity: intersectionCheck,
-                        diff: intersectionBase.quantity - intersectionCheck.quantity
+                        sku: intersectionCheckVar,
+                        quantity: intersectionCheckVar,
+                        diff: intersectionBaseVar.quantity - intersectionCheckVar.quantity
                     }
                     reqArray.push(reqObject);
                 }
             }
 
-        let firstNum = hour.split("")[0];
-        let secondNum = hour.split("")[1];
-
-        let hourMin;
-
-        if (firstNum === "0") {
-            secondNum -= 1;
-            hourMin = firstNum.concat(secondNum);
-        } else if (firstNum === "1" && secondNum === "0") {
-            hourMin = "09";
-        } else {
-            hourMin = hour - 1;
-        }
-	    console.log(hourMin);
-
-        const newAll = reqArray;
-
-        newAll.sort((a,b) => a.diff - b.diff);
-
-        fs.writeFileSync(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`, JSON.stringify(newAll));
+        fs.writeFileSync(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`, JSON.stringify(reqArray));
         fs.readFile('dateArr.json', function (err, data) {
             var json = JSON.parse(data)
             json.push(`./${yearNow}-${monthNow}-${dayNow}T${hourNow}-popular.json`)
