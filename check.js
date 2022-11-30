@@ -3,10 +3,13 @@ require('dotenv').config();
 const token = process.env.API_TOKEN;
 const fs = require("fs");
 const cronJob = require('cron').CronJob;
+var schedule = require('node-schedule');
 
-const job = new cronJob('0 0 */1 * * *', getData);
+var j = schedule.scheduleJob('0 */1 * * *', getData);
 
-job.start();
+//const job = new cronJob('0 */15 * * * *', getData);
+
+//job.start();
 
 const instance = axios.create({
     baseURL: 'https://api.bigbuy.eu/rest',
@@ -52,8 +55,6 @@ function getOnce() {
 
         let {data} = response;
 
-        console.log(data);
-
         let dateRaw = new Date();
         let dateNow = dateRaw.toLocaleString('en-GB', {timeZone: 'Europe/Kiev'});
         let yearNow = dateNow.split("/")[2].split(",")[0];
@@ -91,22 +92,25 @@ const stockData = instance.get('/catalog/productsstock');
 
 const variableData = instance.get('/catalog/productsvariationsstock');
 
+        let dateRaw = new Date();
+        let dateNow = dateRaw.toLocaleString('en-GB', {timeZone: 'Europe/Kiev'})
+        let yearNow = dateNow.split("/")[2].split(",")[0];
+        let monthNow = dateNow.split("/")[1];
+        let dayNow = dateNow.split("/")[0];
+        let hourNow = dateNow.split("/")[2].split(",")[1].replace(/\s/gm, "").split(":")[0];
+
+
 function getData() {
     axios.all([stockData, variableData]).then(axios.spread((...responses) => {  
 
         const stockResponse = responses[0].data;
         const variableResponse = responses[1].data;
 
-        let reqArray = [];
+	let reqArray;
 
-        let dateRaw = new Date();
-        let dateNow = dateRaw.toLocaleString('en-GB', {timeZone: 'Europe/Kiev'});
-        let yearNow = dateNow.split("/")[2].split(",")[0];
-        let monthNow = dateNow.split("/")[1];
-        let dayNow = dateNow.split("/")[0];
-        let hourNow = dateNow.split("/")[2].split(",")[1].replace(/\s/gm, "").split(":")[0];
+	let newArr = [];
 
-        let newArr = [];
+	reqArray = [];
 
         for (let id1 of stockResponse) {
             let obj = {
@@ -118,6 +122,8 @@ function getData() {
 
             newArr.push(obj);
         }
+
+	console.log(newArr);
 
         console.log("new arr generated");
         
@@ -134,7 +140,7 @@ function getData() {
         let minusHour;
 
 
-        const getYesterday = (dateOnly = false) => {
+        let getYesterday = (dateOnly = false) => {
             let d = new Date();
             d.setDate(d.getDate() - 1);
               d = d.toLocaleString('en-GB', {timeZone: 'Europe/Kiev'});
@@ -157,6 +163,9 @@ function getData() {
 
         let rawBase;
 
+	console.log(yearNow+"-"+monthNow+"-"+dayNow+"T"+hourNow);
+	console.log(yearNow+"-"+monthNow+"-"+dayY+"T"+hourNow);
+
         if (minusHour === "23") {
             rawBase = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T${minusHour}.json`);
         } else {
@@ -165,15 +174,20 @@ function getData() {
 
         let oldArr = JSON.parse(rawBase);
         
-        const operation = (list1, list2, isUnion = false) =>
+        let operation = (list1, list2, isUnion = false) =>
         list1.filter(
             (set => a => isUnion === set.has(a.sku))(new Set(list2.map(b => b.sku)))
         );
+	console.log("oldArr");
+	console.log(oldArr);
 
-    const inBoth = (list1, list2) => operation(list1, list2, true);
+        let inBoth = (list1, list2) => operation(list1, list2, true);
         let inBothDefault1 = inBoth(newArr, oldArr);
         let inBothDefault2 = inBoth(oldArr, newArr);
 
+	console.log("in both default");
+	console.log(inBothDefault2);
+	
         inBothDefault1.sort((a,b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
         inBothDefault2.sort((a,b) => (a.sku > b.sku) ? 1 : ((b.sku > a.sku) ? -1 : 0));
         
@@ -182,7 +196,8 @@ function getData() {
                 let reqObject = {
                     sku:  inBothDefault1[i].sku,
                     quantity: inBothDefault1[i].quantity,
-                    diff: inBothDefault2[i].quantity - inBothDefault1[i].quantity
+                    diff: inBothDefault2[i].quantity - inBothDefault1[i].quantity,
+		    isZero: inBothDefault2[i].quantity - inBothDefault1[i].quantity === 0 ? true : false
                 }
                 reqArray.push(reqObject);
             }
@@ -210,9 +225,9 @@ function getData() {
         let rawVar;
 
         if (minusHour === "23") {
-            rawVar = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T${minusHour}.json`);
+            rawVar = fs.readFileSync(`${yearNow}-${monthNow}-${dayY}T${minusHour}-variable.json`);
         } else {
-            rawVar = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${minusHour}.json`);
+            rawVar = fs.readFileSync(`${yearNow}-${monthNow}-${dayNow}T${minusHour}-variable.json`);
         }
 
         let oldVariable = JSON.parse(rawVar);
@@ -228,11 +243,14 @@ function getData() {
                 let reqObject = {
                     sku:  inBothDefault1Var[i].sku,
                     quantity: inBothDefault1Var[i].quantity,
-                    diff: inBothDefault2Var[i].quantity - inBothDefault1Var[i].quantity
+                    diff: inBothDefault2Var[i].quantity - inBothDefault1Var[i].quantity,
+		    isZero: inBothDefault2Var[i].quantity - inBothDefault1Var[i].quantity === 0 ? true : false
                 }
                 reqArray.push(reqObject);
             }
         }
+
+	console.log(yearNow+"-"+monthNow+"-"+dayNow+"T"+hourNow);
 
         console.log(reqArray)
 
